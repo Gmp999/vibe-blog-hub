@@ -1,14 +1,27 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import BlogListPage from './BlogListPage';
+import AuthPage from './AuthPage';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const { isAuthenticated } = useAuth();
+
+  const handleAuthSuccess = () => {
+    // This will be handled by the auth context
+  };
+
+  const handleSelectBlog = (blogId: string) => {
+    // For now, we'll just log it since we're on the index page
+    console.log('Selected blog:', blogId);
+  };
+
+  // If user is authenticated or browsing as guest, show blog list
+  // Otherwise show auth page
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  return <BlogListPage onSelectBlog={handleSelectBlog} />;
 };
 
 export default Index;
