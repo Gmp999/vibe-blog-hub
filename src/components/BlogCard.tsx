@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { BlogPost } from '../types';
-import { Calendar, User, Eye, MessageCircle, Tag } from 'lucide-react';
+import { Calendar, User, Eye, MessageCircle, Tag, Image } from 'lucide-react';
 
 interface BlogCardProps {
   post: BlogPost;
@@ -22,6 +22,17 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, onClick }) => {
       onClick={onClick}
       className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 hover:border-gray-300 group"
     >
+      {/* Blog Image */}
+      {post.image && (
+        <div className="w-full h-48 rounded-t-lg overflow-hidden">
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+      )}
+      
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">

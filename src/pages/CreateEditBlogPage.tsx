@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { ArrowLeft, Save, Eye, Tag, X } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Tag, X, Image } from 'lucide-react';
 
 interface CreateEditBlogPageProps {
   blogId?: string;
@@ -25,6 +25,7 @@ const CreateEditBlogPage: React.FC<CreateEditBlogPageProps> = ({ blogId, onBack,
     title: '',
     content: '',
     excerpt: '',
+    image: '',
     tags: [] as string[]
   });
 
@@ -37,6 +38,7 @@ const CreateEditBlogPage: React.FC<CreateEditBlogPageProps> = ({ blogId, onBack,
         title: existingPost.title,
         content: existingPost.content,
         excerpt: existingPost.excerpt,
+        image: existingPost.image || '',
         tags: [...existingPost.tags]
       });
     }
@@ -171,6 +173,30 @@ const CreateEditBlogPage: React.FC<CreateEditBlogPageProps> = ({ blogId, onBack,
                 />
               </div>
 
+              {/* Image URL */}
+              <div>
+                <Label htmlFor="image">Featured Image URL</Label>
+                <Input
+                  id="image"
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                />
+                {formData.image && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="w-full h-32 object-cover rounded border"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Excerpt */}
               <div>
                 <Label htmlFor="excerpt">Excerpt</Label>
@@ -255,8 +281,22 @@ Just write naturally and it will be formatted!"
               <CardTitle>Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              {formData.title || formData.content ? (
+              {formData.title || formData.content || formData.image ? (
                 <article className="prose prose-lg max-w-none">
+                  {/* Featured Image */}
+                  {formData.image && (
+                    <div className="mb-6">
+                      <img
+                        src={formData.image}
+                        alt={formData.title || "Blog image"}
+                        className="w-full h-64 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
+                    </div>
+                  )}
+
                   {/* Title */}
                   {formData.title && (
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -295,6 +335,7 @@ Just write naturally and it will be formatted!"
                 </article>
               ) : (
                 <div className="text-center py-12 text-gray-500">
+                  <Image className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                   <p>Start writing to see your preview here...</p>
                 </div>
               )}

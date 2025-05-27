@@ -98,6 +98,20 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
 
       {/* Article Header */}
       <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {/* Featured Image */}
+        {post.image && (
+          <div className="w-full h-64 md:h-80 overflow-hidden">
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          </div>
+        )}
+        
         <div className="p-8">
           {/* Title and Actions */}
           <div className="flex justify-between items-start mb-6">

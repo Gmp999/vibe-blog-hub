@@ -17,6 +17,7 @@ export interface BlogPost {
   authorId: string;
   author: User;
   tags: string[];
+  image?: string;
   createdAt: string;
   updatedAt: string;
   views: number;
