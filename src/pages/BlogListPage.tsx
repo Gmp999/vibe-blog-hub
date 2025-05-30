@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { mockBlogPosts } from '../data/mockData';
+import { useBlogPosts } from '../hooks/useBlogPosts';
 import BlogCard from '../components/BlogCard';
-import { Search, Filter, Tag } from 'lucide-react';
+import { Search, Filter, Tag, Loader2 } from 'lucide-react';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 
@@ -15,13 +15,39 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onSelectBlog }) => {
   const [selectedTag, setSelectedTag] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'popular'>('newest');
 
+  const { data: blogPosts, isLoading, error } = useBlogPosts();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading blogs...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error loading blogs</h2>
+          <p className="text-gray-600">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const posts = blogPosts || [];
+
   // Get all unique tags
   const allTags = Array.from(
-    new Set(mockBlogPosts.flatMap(post => post.tags))
+    new Set(posts.flatMap(post => post.tags))
   ).sort();
 
   // Filter and sort posts
-  const filteredPosts = mockBlogPosts
+  const filteredPosts = posts
     .filter(post => {
       const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -168,24 +194,26 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onSelectBlog }) => {
       )}
 
       {/* Popular Tags */}
-      <div className="mt-12 bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Popular Tags</h3>
-        <div className="flex flex-wrap gap-2">
-          {allTags.slice(0, 10).map(tag => (
-            <button
-              key={tag}
-              onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedTag === tag
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-            >
-              #{tag}
-            </button>
-          ))}
+      {allTags.length > 0 && (
+        <div className="mt-12 bg-gray-50 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Popular Tags</h3>
+          <div className="flex flex-wrap gap-2">
+            {allTags.slice(0, 10).map(tag => (
+              <button
+                key={tag}
+                onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  selectedTag === tag
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

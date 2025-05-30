@@ -21,26 +21,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    role: 'admin',
-    bio: 'Platform administrator',
-    createdAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'user',
-    bio: 'Tech enthusiast and blogger',
-    createdAt: '2024-01-02T00:00:00Z'
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -53,20 +33,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const userData: User = {
-          id: session.user.id,
-          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || '',
-          role: 'user',
-          bio: '',
-          createdAt: session.user.created_at
-        };
-        
-        setAuthState({
-          user: userData,
-          isAuthenticated: true,
-          token: session.access_token
-        });
+        // Fetch user profile from our profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          const userData: User = {
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role as 'admin' | 'user',
+            bio: profile.bio || '',
+            avatar: profile.avatar_url,
+            createdAt: profile.created_at
+          };
+          
+          setAuthState({
+            user: userData,
+            isAuthenticated: true,
+            token: session.access_token
+          });
+        }
       }
     };
 
@@ -75,20 +65,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const userData: User = {
-          id: session.user.id,
-          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          email: session.user.email || '',
-          role: 'user',
-          bio: '',
-          createdAt: session.user.created_at
-        };
-        
-        setAuthState({
-          user: userData,
-          isAuthenticated: true,
-          token: session.access_token
-        });
+        // Fetch user profile from our profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile) {
+          const userData: User = {
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role as 'admin' | 'user',
+            bio: profile.bio || '',
+            avatar: profile.avatar_url,
+            createdAt: profile.created_at
+          };
+          
+          setAuthState({
+            user: userData,
+            isAuthenticated: true,
+            token: session.access_token
+          });
+        }
       } else {
         setAuthState({
           user: null,
@@ -109,18 +109,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        // Fallback to mock authentication
-        const user = mockUsers.find(u => u.email === email);
-        if (user && password === 'password') {
-          const newAuthState = {
-            user,
-            isAuthenticated: true,
-            token: 'mock-token-' + user.id
-          };
-          setAuthState(newAuthState);
-          localStorage.setItem('blogAuth', JSON.stringify(newAuthState));
-          return true;
-        }
         console.error('Login error:', error);
         return false;
       }
@@ -166,26 +154,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        // Fallback to mock signup
-        const newUser: User = {
-          id: String(Date.now()),
-          name,
-          email,
-          role: 'user',
-          bio: '',
-          createdAt: new Date().toISOString()
-        };
-        
-        mockUsers.push(newUser);
-        
-        const newAuthState = {
-          user: newUser,
-          isAuthenticated: true,
-          token: 'mock-token-' + newUser.id
-        };
-        setAuthState(newAuthState);
-        localStorage.setItem('blogAuth', JSON.stringify(newAuthState));
-        return true;
+        console.error('Signup error:', error);
+        return false;
       }
 
       return true;
@@ -207,16 +177,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: false,
       token: null
     });
-    localStorage.removeItem('blogAuth');
   };
 
-  const updateUser = (user: User) => {
-    const newAuthState = {
-      ...authState,
-      user
-    };
-    setAuthState(newAuthState);
-    localStorage.setItem('blogAuth', JSON.stringify(newAuthState));
+  const updateUser = async (user: User) => {
+    // Update profile in database
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: user.name,
+        bio: user.bio,
+        avatar_url: user.avatar,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', user.id);
+
+    if (!error) {
+      setAuthState(prev => ({
+        ...prev,
+        user
+      }));
+    }
   };
 
   return (

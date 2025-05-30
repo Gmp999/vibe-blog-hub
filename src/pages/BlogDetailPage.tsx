@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
-import { mockBlogPosts, mockComments } from '../data/mockData';
+import { useQuery } from '@tanstack/react-query';
+import { getBlogPost, incrementPostViews } from '../services/database';
+import { useComments, useCreateComment } from '../hooks/useComments';
 import { useAuth } from '../contexts/AuthContext';
-import { Calendar, User, Eye, MessageCircle, Tag, ArrowLeft, Edit } from 'lucide-react';
+import { Calendar, User, Eye, MessageCircle, Tag, ArrowLeft, Edit, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
@@ -16,12 +18,51 @@ interface BlogDetailPageProps {
 const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit }) => {
   const { user } = useAuth();
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState(mockComments);
 
-  const post = mockBlogPosts.find(p => p.id === blogId);
-  const postComments = comments.filter(c => c.postId === blogId);
+  const { data: post, isLoading: postLoading, error: postError } = useQuery({
+    queryKey: ['blogPost', blogId],
+    queryFn: () => getBlogPost(blogId),
+    enabled: !!blogId,
+  });
 
-  if (!post) {
+  const { data: comments = [], isLoading: commentsLoading } = useComments(blogId);
+  const createCommentMutation = useCreateComment();
+
+  // Increment views when post loads
+  React.useEffect(() => {
+    if (post) {
+      incrementPostViews(blogId);
+    }
+  }, [post, blogId]);
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !user) return;
+
+    try {
+      await createCommentMutation.mutateAsync({
+        post_id: blogId,
+        author_id: user.id,
+        content: newComment.trim(),
+      });
+      setNewComment('');
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    }
+  };
+
+  if (postLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading blog post...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (postError || !post) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Blog not found</h1>
@@ -29,23 +70,6 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
       </div>
     );
   }
-
-  const handleSubmitComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !user) return;
-
-    const comment = {
-      id: String(Date.now()),
-      postId: blogId,
-      authorId: user.id,
-      author: user,
-      content: newComment.trim(),
-      createdAt: new Date().toISOString()
-    };
-
-    setComments([...comments, comment]);
-    setNewComment('');
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -163,7 +187,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
               </div>
               <div className="flex items-center">
                 <MessageCircle className="w-4 h-4 mr-1" />
-                <span className="text-sm">{postComments.length} comments</span>
+                <span className="text-sm">{comments.length} comments</span>
               </div>
             </div>
           </div>
@@ -193,7 +217,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
       {/* Comments Section */}
       <div className="mt-12">
         <h3 className="text-2xl font-bold text-gray-900 mb-6">
-          Comments ({postComments.length})
+          Comments ({comments.length})
         </h3>
 
         {/* Add Comment Form */}
@@ -211,8 +235,11 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
                   className="min-h-[100px] mb-4"
                   required
                 />
-                <Button type="submit" disabled={!newComment.trim()}>
-                  Post Comment
+                <Button 
+                  type="submit" 
+                  disabled={!newComment.trim() || createCommentMutation.isPending}
+                >
+                  {createCommentMutation.isPending ? 'Posting...' : 'Post Comment'}
                 </Button>
               </form>
             </CardContent>
@@ -227,8 +254,13 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ blogId, onBack, onEdit 
 
         {/* Comments List */}
         <div className="space-y-6">
-          {postComments.length > 0 ? (
-            postComments.map((comment) => (
+          {commentsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading comments...</span>
+            </div>
+          ) : comments.length > 0 ? (
+            comments.map((comment) => (
               <Card key={comment.id}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">

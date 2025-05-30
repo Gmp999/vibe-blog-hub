@@ -9,7 +9,193 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      analytics: {
+        Row: {
+          analytics_id: number
+          created_at: string | null
+          total_blog_posts: number
+          total_comments: number
+          total_users: number
+          total_views: number
+          updated_at: string | null
+        }
+        Insert: {
+          analytics_id?: number
+          created_at?: string | null
+          total_blog_posts?: number
+          total_comments?: number
+          total_users?: number
+          total_views?: number
+          updated_at?: string | null
+        }
+        Update: {
+          analytics_id?: number
+          created_at?: string | null
+          total_blog_posts?: number
+          total_comments?: number
+          total_users?: number
+          total_views?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      blogpost: {
+        Row: {
+          author_id: number | null
+          content: string
+          created_at: string | null
+          images: string[] | null
+          post_id: number
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: number | null
+          content: string
+          created_at?: string | null
+          images?: string[] | null
+          post_id?: number
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: number | null
+          content?: string
+          created_at?: string | null
+          images?: string[] | null
+          post_id?: number
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blogpost_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          comment_id: number
+          content: string
+          created_at: string | null
+          post_id: number
+          updated_at: string | null
+          user_id: number
+        }
+        Insert: {
+          comment_id?: number
+          content: string
+          created_at?: string | null
+          post_id: number
+          updated_at?: string | null
+          user_id: number
+        }
+        Update: {
+          comment_id?: number
+          content?: string
+          created_at?: string | null
+          post_id?: number
+          updated_at?: string | null
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blogpost"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          is_read: boolean | null
+          message: string | null
+          notification_id: number
+          related_entity_id: number | null
+          type: string
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          is_read?: boolean | null
+          message?: string | null
+          notification_id?: number
+          related_entity_id?: number | null
+          type: string
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          is_read?: boolean | null
+          message?: string | null
+          notification_id?: number
+          related_entity_id?: number | null
+          type?: string
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          email: string
+          password_hash: string
+          profile_picture_url: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: number
+          username: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          email: string
+          password_hash: string
+          profile_picture_url?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: number
+          username: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string
+          password_hash?: string
+          profile_picture_url?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: number
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

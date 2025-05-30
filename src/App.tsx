@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/ui/toaster';
 import { Toaster as Sonner } from './components/ui/sonner';
@@ -16,6 +17,9 @@ import AdminDashboard from './pages/AdminDashboard';
 import Navigation from './components/Navigation';
 
 type AppPage = 'auth' | 'blogs' | 'blog-detail' | 'create-blog' | 'edit-blog' | 'profile' | 'admin';
+
+// Create a client
+const queryClient = new QueryClient();
 
 const AppContent: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -118,9 +122,11 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 
